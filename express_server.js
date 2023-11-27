@@ -8,14 +8,25 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b6UTxQ": {
+    longURL:  "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  "i3BoGr": {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  }
 };
 
 const users = {
   userRandomID: {
-    id: "userRandomID",
+    id: "aJ48lW",
     email:  "user@example.com",
     password: "purple-monkey-dinosaur",
   },
@@ -42,16 +53,25 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let user = users[req.cookies["user_id"]];
+  let curUser = users[req.cookies["user_id"]];
+  if (!curUser) {
+    res.status(403).json({error: "Login or Register first!"});
+  }
+
+  let urls = urlsForUser(curUser.id);
   const templateVars = {
     // username: req.cookies["username"],
-    user: user,
-    urls: urlDatabase
+    user: curUser,
+    urls: urls
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  let curUser = users[req.cookies["user_id"]];
+  if (!curUser) {
+    res.redirect("/login");
+  }
   res.render("urls_new");
 });
 
@@ -61,13 +81,16 @@ app.get("/urls/:id", (req, res) => {
     // username: req.cookies["username"],
     user: user,
     id: req.params.id,
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id].longURL
   };
   res.render("urls_show.ejs", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
+  if (!longURL) {
+    return res.status(404).send("<html><body><h1>URL not found.</h1></body></html>");
+  }
   res.redirect(longURL);
 });
 
@@ -90,8 +113,12 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
+  let curUser = users[req.cookies["user_id"]];
+  if (!curUser) {
+    return res.status(401).send("<html><body><h1>You must be logged in to shorten URLs.</h1></body></html>");
+  }
   let newId = generateRandomString(6);
-  urlDatabase[newId] = req.body.longURL;
+  urlDatabase[newId].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -102,10 +129,12 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  let isFound = false;
   Object.keys(users).forEach(key => {
-    if (users[key].email === req.body.username) {
+    if (users[key].email === req.body.email) {
       if (users[key].password === req.body.password) {
         res.cookie("user_id", users[key].id);
+        isFound = true;
         return users[key];
       } else {
         return res.status(403).json({error: "Password is not match."});
@@ -113,7 +142,7 @@ app.post("/login", (req, res) => {
     }
     return null;
   });
-  res.status(403).json({error: "Email is not found."});
+  if (!isFound)res.status(403).json({error: "Email is not found."});
   res.redirect("/urls");
 });
 
@@ -162,4 +191,14 @@ const generateRandomString = function(length) {
   }
 
   return result;
+};
+
+const urlsForUser = function(id) {
+  let urls = {};
+  Object.keys(urlDatabase).forEach(key => {
+    if (urlDatabase[key].userID === id) {
+      urls[key] = urlDatabase[key].longURL;
+    }
+  });
+  return urls;
 };
