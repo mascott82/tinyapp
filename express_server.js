@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cookieParser());
@@ -132,7 +133,8 @@ app.post("/login", (req, res) => {
   let isFound = false;
   Object.keys(users).forEach(key => {
     if (users[key].email === req.body.email) {
-      if (users[key].password === req.body.password) {
+      // if (users[key].password === req.body.password) {
+      if (bcrypt.compareSync(req.body.password, users[key].password)) {
         res.cookie("user_id", users[key].id);
         isFound = true;
         return users[key];
@@ -160,6 +162,8 @@ app.post("/register", (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
+  const hashedPwd = bcrypt.hashSync(newUserPwd, 10);
+
   Object.keys(users).forEach(key => {
     if (users[key].email === newUserEmail) {
       return res.status(400).json({ error: 'Email is already in use.' });
@@ -169,7 +173,8 @@ app.post("/register", (req, res) => {
   const newUser = {
     id: newUserId,
     email:  newUserEmail,
-    password: newUserPwd
+    // password: newUserPwd
+    password: hashedPwd
   };
   users[newUserId] = newUser;
   res.cookie("user_id", newUserId);
