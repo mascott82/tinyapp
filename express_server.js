@@ -1,9 +1,15 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
 
 const app = express();
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secret-key'],
+  maxAge: 24 * 60 * 60 * 1000
+}));
 const PORT = 8080;
 
 app.set("view engine", "ejs");
@@ -29,7 +35,8 @@ const users = {
   userRandomID: {
     id: "aJ48lW",
     email:  "user@example.com",
-    password: "purple-monkey-dinosaur",
+    // password: "purple-monkey-dinosaur",
+    password: "$2a$10$A6FrxWifFp8C3aQfOhBqG.vI.1MvfSChVqj.EuEGDVpUhzQn4V3AK"
   },
 
   user2RandomID:  {
@@ -54,7 +61,8 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let curUser = users[req.cookies["user_id"]];
+  // let curUser = users[req.cookies["user_id"]];
+  let curUser = users[req.session.user_id];
   if (!curUser) {
     res.status(403).json({error: "Login or Register first!"});
   }
@@ -69,7 +77,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let curUser = users[req.cookies["user_id"]];
+  // let curUser = users[req.cookies["user_id"]];
+  let curUser = users[req.session.user_id];
   if (!curUser) {
     res.redirect("/login");
   }
@@ -77,7 +86,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  let user = users[req.cookies["user_id"]];
+  // let user = users[req.cookies["user_id"]];
+  let user = users[req.session.user_id];
   const templateVars = {
     // username: req.cookies["username"],
     user: user,
@@ -96,7 +106,8 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let user = users[req.cookies["user_id"]];
+  // let user = users[req.cookies["user_id"]];
+  let user = users[req.session.user_id];
   const templateVars = {
     // username: req.cookies["username"]
     user: user
@@ -105,7 +116,8 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  let user = users[req.cookies["user_id"]];
+  // let user = users[req.cookies["user_id"]];
+  let user = users[req.session.user_id];
   const templateVars = {
     // username: req.cookies["username"]
     user: user
@@ -114,7 +126,8 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let curUser = users[req.cookies["user_id"]];
+  // let curUser = users[req.cookies["user_id"]];
+  let curUser = users[req.session.user_id];
   if (!curUser) {
     return res.status(401).send("<html><body><h1>You must be logged in to shorten URLs.</h1></body></html>");
   }
@@ -134,8 +147,10 @@ app.post("/login", (req, res) => {
   Object.keys(users).forEach(key => {
     if (users[key].email === req.body.email) {
       // if (users[key].password === req.body.password) {
+      console.log(bcrypt.compareSync(req.body.password, users[key].password));
       if (bcrypt.compareSync(req.body.password, users[key].password)) {
-        res.cookie("user_id", users[key].id);
+        // res.cookie("user_id", users[key].id);
+        req.session.user_id = users[key].id;
         isFound = true;
         return users[key];
       } else {
@@ -177,7 +192,8 @@ app.post("/register", (req, res) => {
     password: hashedPwd
   };
   users[newUserId] = newUser;
-  res.cookie("user_id", newUserId);
+  // res.cookie("user_id", newUserId);
+  req.session.user_id = newUserId;
   res.redirect("/urls");
 
 });
