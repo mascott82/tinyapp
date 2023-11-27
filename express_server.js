@@ -2,6 +2,7 @@ const express = require('express');
 // const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
+const { getUserByEmail } = require('./helpers');
 
 const app = express();
 // app.use(cookieParser());
@@ -63,17 +64,17 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   // let curUser = users[req.cookies["user_id"]];
   let curUser = users[req.session.user_id];
-  if (!curUser) {
+  if (!curUser || curUser === 'undefined') {
     res.status(403).json({error: "Login or Register first!"});
+  } else {
+    let urls = urlsForUser(curUser.id);
+    const templateVars = {
+      // username: req.cookies["username"],
+      user: curUser,
+      urls: urls
+    };
+    res.render("urls_index", templateVars);
   }
-
-  let urls = urlsForUser(curUser.id);
-  const templateVars = {
-    // username: req.cookies["username"],
-    user: curUser,
-    urls: urls
-  };
-  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -143,28 +144,38 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  let isFound = false;
-  Object.keys(users).forEach(key => {
-    if (users[key].email === req.body.email) {
-      // if (users[key].password === req.body.password) {
-      console.log(bcrypt.compareSync(req.body.password, users[key].password));
-      if (bcrypt.compareSync(req.body.password, users[key].password)) {
-        // res.cookie("user_id", users[key].id);
-        req.session.user_id = users[key].id;
-        isFound = true;
-        return users[key];
-      } else {
-        return res.status(403).json({error: "Password is not match."});
-      }
-    }
-    return null;
-  });
-  if (!isFound)res.status(403).json({error: "Email is not found."});
-  res.redirect("/urls");
+  let curUser = getUserByEmail(req.body.email, users);
+
+  if (!curUser) {
+    return res.status(403).json({error: "Email is not found."});
+  } else if (bcrypt.compareSync(req.body.password, curUser.password)) {
+    req.session.user_id = curUser.id;
+    //return curUser;
+    res.redirect("/urls");
+  } else {
+    return res.status(403).json({error: "Password is not match."});
+  }
+
+  // Object.keys(users).forEach(key => {
+  //   if (users[key].email === req.body.email) {
+  //     // if (users[key].password === req.body.password) {
+  //     if (bcrypt.compareSync(req.body.password, users[key].password)) {
+  //       // res.cookie("user_id", users[key].id);
+  //       req.session.user_id = users[key].id;
+  //       isFound = true;
+  //       return users[key];
+  //     } else {
+  //       return res.status(403).json({error: "Password is not match."});
+  //     }
+  //   }
+  //   return null;
+  // });
+  // if (!isFound)res.status(403).json({error: "Email is not found."});
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  // res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
