@@ -19,8 +19,8 @@
       </div>
     </div>
     <div>
-      <% if (username) { %>
-        <span>Logged in as: <%= username %>!</span>
+      <% if (user) { %>
+        <span>Logged in as: <%= user.email %>!</span>
         <form action="/logout" method="post">
           <input type="submit" value="Logout" />
         </form>
@@ -29,6 +29,8 @@
         <input name="username" placeholder="Username" id="username" />
         <input type="submit" value="Login" />
       </form>
+      <a href="/register">Register</a>
+      <a href="/login">Login</a>
       <% } %>
     </div>
   </nav>
