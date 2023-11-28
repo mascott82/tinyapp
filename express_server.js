@@ -37,12 +37,12 @@ const users = {
     id: "aJ48lW",
     email:  "user@example.com",
     // password: "purple-monkey-dinosaur",
-    password: "$2a$10$A6FrxWifFp8C3aQfOhBqG.vI.1MvfSChVqj.EuEGDVpUhzQn4V3AK"
+    password: "$2a$10$euW2ylLuqr4cQJdqb96.5.Fw.2Md791bWl0FQXJR50YBx2g5Ezkuu"
   },
 
   user2RandomID:  {
     id: "user2RandomID",
-    email:  "user2example.com",
+    email:  "user2@example.com",
     password: "dishwasher-funk",
   }
 };
@@ -62,8 +62,10 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  // let curUser = users[req.cookies["user_id"]];
-  let curUser = users[req.session.user_id];
+  let curUser = {};
+  Object.keys(users).forEach(key => {
+    if (users[key].id === req.session.user_id) curUser = users[key];
+  });
   if (!curUser || curUser === 'undefined') {
     res.status(403).json({error: "Login or Register first!"});
   } else {
@@ -145,36 +147,17 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/login", (req, res) => {
   let curUser = getUserByEmail(req.body.email, users);
-
   if (!curUser) {
     return res.status(403).json({error: "Email is not found."});
   } else if (bcrypt.compareSync(req.body.password, curUser.password)) {
     req.session.user_id = curUser.id;
-    //return curUser;
     res.redirect("/urls");
   } else {
     return res.status(403).json({error: "Password is not match."});
   }
-
-  // Object.keys(users).forEach(key => {
-  //   if (users[key].email === req.body.email) {
-  //     // if (users[key].password === req.body.password) {
-  //     if (bcrypt.compareSync(req.body.password, users[key].password)) {
-  //       // res.cookie("user_id", users[key].id);
-  //       req.session.user_id = users[key].id;
-  //       isFound = true;
-  //       return users[key];
-  //     } else {
-  //       return res.status(403).json({error: "Password is not match."});
-  //     }
-  //   }
-  //   return null;
-  // });
-  // if (!isFound)res.status(403).json({error: "Email is not found."});
 });
 
 app.post("/logout", (req, res) => {
-  // res.clearCookie("user_id");
   req.session = null;
   res.redirect("/urls");
 });
@@ -189,6 +172,8 @@ app.post("/register", (req, res) => {
   }
 
   const hashedPwd = bcrypt.hashSync(newUserPwd, 10);
+
+  console.log(`==${hashedPwd}==`);
 
   Object.keys(users).forEach(key => {
     if (users[key].email === newUserEmail) {
