@@ -174,15 +174,40 @@ app.get("/login", (req, res) => {
   res.render("login.ejs", templateVars);
 });
 
-// Create a new URL route
+/**
+ * POST endpoint for creating a new URL route
+ * If the user is logged in, generates a unique short URL for the provided long URL
+ * and associates it with the user's ID in the database. Redirects to the newly created URL.
+ * If the user is not logged in, renders an error page with a message prompting the user to log in.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ **/
 app.post("/urls", (req, res) => {
-  let curUser = users[req.session.user_id];
-  if (!curUser) {
-    return res.status(401).send("<html><body><h1>You must be logged in to shorten URLs.</h1></body></html>");
+  // Check if the user is logged in
+  let usrId = req.session.user_id;
+  if (usrId) {
+    // Generate a random 6-character string as the short URL
+    let urlId = generateRandomString(6);
+
+    // Create a new URL object with provided information
+    let newUrl = {
+      longURL:  req.body.longURL,
+      userID: usrId,
+      createdDate:  Date.now()
+    };
+
+    // Update the database with the new URL information
+    urlDatabase[urlId] = newUrl;
+
+    // Redirect to the newly created URL
+    res.redirect(`/urls/${urlId}`);
+  } else {
+    // User is not logged in, render an error page
+    const errorMessage = "You need to log in to view your URLs.";
+    res.render("error", { error: errorMessage });
   }
-  let newId = generateRandomString(6);
-  urlDatabase[newId].longURL = req.body.longURL;
-  res.redirect("/urls");
 });
 
 // Delete a URL route
