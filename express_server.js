@@ -31,38 +31,50 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 
-// Home route - redirects to login or URLs based on user session
+/**
+ * GET endpoint for the home route
+ * Redirects to the login page if the user is not logged in, otherwise redirects to the URLs page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
 app.get("/", (req, res) => {
+  // Check if the user is logged in and redirect accordingly
   if (req.session.user_id) {
+    // User is logged in, redirect to the URLs page
     res.redirect("/urls");
   } else {
+    // User is not logged in, redirect to the login page
     res.redirect("/login");
   }
 });
 
-// JSON representation of the URL database
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// Hello route for testing
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting: "Hello World!" };
-  res.render("hello_world", templateVars);
-});
-
-// URL Index route - displays user-specific URLs
+/**
+ * GET endpoint for the URL Index route
+ * Displays user-specific URLs if the user is logged in, otherwise renders an error page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
 app.get("/urls", (req, res) => {
+  // Check if the user is logged in
   if (req.session.user_id) {
+    // Retrieve user information and their associated URLs
     let curUser = users[req.session.user_id];
     let urls = urlsForUser(curUser.id);
+
+    // Prepare template variables for rendering
     const templateVars = {
       user: curUser,
       urls: urls
     };
+
+    // Render the 'urls_index' template with the template variables
     res.render("urls_index", templateVars);
   } else {
-    // User is not logged in
+    // User is not logged in, render an error page
     const errorMessage = "You need to log in to view your URLs.";
 
     // Render the error template with the error message
@@ -70,35 +82,51 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// New URL route - displays form for creating a new URL
+/**
+ * GET endpoint for the New URL route
+ * Displays the form for creating a new URL if the user is logged in, otherwise redirects to the login page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
 app.get("/urls/new", (req, res) => {
+  // Check if the user is logged in
   if (req.session.user_id) {
+    // Retrieve user information for rendering
     let curUser = users[req.session.user_id];
+
+    // Prepare template variables for rendering
     let templateVars = {
       user: curUser
     };
+
+    // Render the 'urls_new' template with the template variables
     res.render("urls_new", templateVars);
   } else {
+    // User is not logged in, redirect to the login page
     res.redirect("/login");
   }
 });
 
 /**
- * Handles the GET request for displaying details of a specific URL.
- * If the user is logged in and has the necessary permissions, it renders the details page.
- * If the user is not logged in, it renders an error message prompting them to log in.
- * If the requested URL does not exist or the user lacks permission, it renders an appropriate error message.
+ * GET endpoint for displaying details of a specific URL.
+ * Renders the details page if the user is logged in with necessary permissions.
+ * Handles cases where the user is not logged in, the requested URL doesn't exist,
+ * or the user lacks permission, rendering appropriate error messages.
  *
- * @param {object} req - The Express request object.
- * @param {object} res - The Express response object.
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
  */
 app.get("/urls/:id", (req, res) => {
   let urlId = req.params.id;
+
   // Check if the requested URL exists
   if (!Object.hasOwn(urlDatabase, urlId)) {
     const errorMessage = "The requested URL does not exist.";
     res.render("error", { error: errorMessage });
   } else {
+    // Check user login status
     if (req.session.user_id) {
       // Check if the logged-in user has permission to access the URL
       if (urlDatabase[urlId].userID !== req.session.user_id) {
@@ -128,8 +156,11 @@ app.get("/urls/:id", (req, res) => {
 
 /**
  * Handles short URL redirection based on the provided ID parameter.
- * @param {Object} req - Express request object.
- * @param {Object} res - Express response object.
+ * If the ID exists in the database, redirects to the associated long URL.
+ * Renders an error page if the ID or long URL is not found.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
  */
 app.get("/u/:id", (req, res) => {
   // Extract the URL ID from the request parameters
@@ -393,7 +424,11 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-// Start the server
-app.listen(PORT, () => {
+/**
+ * Start the server and listen on the specified port.
+ *
+ * @param {number} PORT - The port number on which the server will listen.
+ * @returns {void}
+ */app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
