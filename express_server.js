@@ -1,26 +1,34 @@
+/**
+ * Express web application for URL shortening.
+ * Uses bcrypt for password hashing, cookie-session for session management,
+ * and method-override for handling HTTP methods.
+ */
+
 const express = require('express');
-// const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
+const methodOverride = require('method-override');
 const { getUserByEmail } = require('./helpers');
 
 const app = express();
-// app.use(cookieParser());
+
+// Configure session middleware
 app.use(cookieSession({
   name: 'session',
   keys: ['secret-key'],
   maxAge: 24 * 60 * 60 * 1000
 }));
+
 const PORT = 8080;
 
+// Set EJS as the view engine
 app.set("view engine", "ejs");
+
+// Middleware for parsing URL-encoded bodies and method override
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
+// Database to store URL data and user data
 const urlDatabase = {
   "b6UTxQ": {
     longURL:  "https://www.tsn.ca",
@@ -47,22 +55,29 @@ const users = {
   }
 };
 
+// Home route - redirects to login or URLs based on user session
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
+// JSON representation of the URL database
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// Hello route for testing
 app.get("/hello", (req, res) => {
-  // res.send("<html><body>Hello <b>World</b></body></html>\n");
   const templateVars = { greeting: "Hello World!" };
   res.render("hello_world", templateVars);
 });
 
+// URL Index route - displays user-specific URLs
 app.get("/urls", (req, res) => {
-  let curUser = {};
+  let curUser;
   Object.keys(users).forEach(key => {
     if (users[key].id === req.session.user_id) curUser = users[key];
   });
@@ -71,7 +86,6 @@ app.get("/urls", (req, res) => {
   } else {
     let urls = urlsForUser(curUser.id);
     const templateVars = {
-      // username: req.cookies["username"],
       user: curUser,
       urls: urls
     };
@@ -79,8 +93,8 @@ app.get("/urls", (req, res) => {
   }
 });
 
+// New URL route - displays form for creating a new URL
 app.get("/urls/new", (req, res) => {
-  // let curUser = users[req.cookies["user_id"]];
   let curUser = users[req.session.user_id];
   if (!curUser) {
     res.redirect("/login");
@@ -88,11 +102,10 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// Individual URL route - displays details for a specific URL
 app.get("/urls/:id", (req, res) => {
-  // let user = users[req.cookies["user_id"]];
   let user = users[req.session.user_id];
   const templateVars = {
-    // username: req.cookies["username"],
     user: user,
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL
@@ -100,6 +113,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show.ejs", templateVars);
 });
 
+// Short URL redirection route
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id].longURL;
   if (!longURL) {
@@ -108,28 +122,26 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// User registration route
 app.get("/register", (req, res) => {
-  // let user = users[req.cookies["user_id"]];
   let user = users[req.session.user_id];
   const templateVars = {
-    // username: req.cookies["username"]
     user: user
   };
   res.render("registration.ejs", templateVars);
 });
 
+// User login route
 app.get("/login", (req, res) => {
-  // let user = users[req.cookies["user_id"]];
   let user = users[req.session.user_id];
   const templateVars = {
-    // username: req.cookies["username"]
     user: user
   };
   res.render("login.ejs", templateVars);
 });
 
+// Create a new URL route
 app.post("/urls", (req, res) => {
-  // let curUser = users[req.cookies["user_id"]];
   let curUser = users[req.session.user_id];
   if (!curUser) {
     return res.status(401).send("<html><body><h1>You must be logged in to shorten URLs.</h1></body></html>");
@@ -139,12 +151,14 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");
 });
 
+// Delete a URL route
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
+// User login route - validates user credentials
 app.post("/login", (req, res) => {
   let curUser = getUserByEmail(req.body.email, users);
   if (!curUser) {
@@ -157,11 +171,13 @@ app.post("/login", (req, res) => {
   }
 });
 
+// User logout route
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
 });
 
+// User registration route - creates a new user
 app.post("/register", (req, res) => {
   let newUserId = generateRandomString(6);
   let newUserEmail = req.body.email;
@@ -184,20 +200,34 @@ app.post("/register", (req, res) => {
   const newUser = {
     id: newUserId,
     email:  newUserEmail,
-    // password: newUserPwd
     password: hashedPwd
   };
   users[newUserId] = newUser;
-  // res.cookie("user_id", newUserId);
   req.session.user_id = newUserId;
   res.redirect("/urls");
 
 });
 
+// Update URL route
+app.put("/urls/:id", (req, res) => {
+  const urlId = req.params.id;
+  urlDatabase[urlId].longURL = req.body.longURL;
+  res.send(`Updating URL with ID ${urlId}`);
+});
+
+// Delete URL route
+app.delete("/urls/:id", (req, res) => {
+  const urlId = req.params.id;
+  delete urlDatabase[urlId];
+  res.redirect("/urls");
+});
+
+// Start the server
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+// Helper function to generate random strings
 const generateRandomString = function(length) {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = '';
@@ -210,6 +240,7 @@ const generateRandomString = function(length) {
   return result;
 };
 
+// Helper function to filter URLs for a specific user
 const urlsForUser = function(id) {
   let urls = {};
   Object.keys(urlDatabase).forEach(key => {
