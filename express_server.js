@@ -8,7 +8,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
-const { getUserByEmail, getUserByEmailAndPwd } = require('./helpers');
+const { generateRandomString, urlsForUser, getUserByEmail, getUserByEmailAndPwd } = require('./helpers');
 
 // Import the objects from data.js
 const { urlDatabase, users } = require('./data');
@@ -377,44 +377,23 @@ app.post("/register", (req, res) => {
   }
 });
 
-// User logout route
+/**
+ * POST endpoint for user logout
+ * Clears the user session and redirects to the login page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
 app.post("/logout", (req, res) => {
+  // Clear the user session
   req.session = null;
-  res.redirect("/urls");
-});
 
-// Delete URL route
-app.delete("/urls/:id", (req, res) => {
-  const urlId = req.params.id;
-  delete urlDatabase[urlId];
-  res.redirect("/urls");
+  // Redirect to the login page
+  res.redirect("/login");
 });
 
 // Start the server
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
-// Helper function to generate random strings
-const generateRandomString = function(length) {
-  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = '';
-
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    result += charset[randomIndex];
-  }
-
-  return result;
-};
-
-// Helper function to filter URLs for a specific user
-const urlsForUser = function(id) {
-  let urls = {};
-  Object.keys(urlDatabase).forEach(key => {
-    if (urlDatabase[key].userID === id) {
-      urls[key] = urlDatabase[key].longURL;
-    }
-  });
-  return urls;
-};
