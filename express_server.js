@@ -72,11 +72,15 @@ app.get("/urls", (req, res) => {
 
 // New URL route - displays form for creating a new URL
 app.get("/urls/new", (req, res) => {
-  let curUser = users[req.session.user_id];
-  if (!curUser) {
+  if (req.session.user_id) {
+    let curUser = users[req.session.user_id];
+    let templateVars = {
+      user: curUser
+    };
+    res.render("urls_new", templateVars);
+  } else {
     res.redirect("/login");
   }
-  res.render("urls_new");
 });
 
 // Individual URL route - displays details for a specific URL
