@@ -126,13 +126,34 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-// Short URL redirection route
+/**
+ * Handles short URL redirection based on the provided ID parameter.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  if (!longURL) {
-    return res.status(404).send("<html><body><h1>URL not found.</h1></body></html>");
+  // Extract the URL ID from the request parameters
+  let urlId = req.params.id;
+
+  // Check if the URL ID exists in the database
+  if (Object.hasOwn(urlDatabase, urlId)) {
+    // Retrieve the long URL associated with the provided ID
+    const longURL = urlDatabase[req.params.id].longURL;
+
+    // Check if a valid long URL is found
+    if (!longURL) {
+      // Render an error page if the long URL is not found
+      const errorMessage = "The requested long URL does not exist.";
+      res.render("error", { error: errorMessage });
+    } else {
+      // Redirect to the long URL if it exists
+      res.redirect(longURL);
+    }
+  } else {
+    // Render an error page if the URL ID is not found in the database
+    const errorMessage = "The requested URL does not exist.";
+    res.render("error", { error: errorMessage });
   }
-  res.redirect(longURL);
 });
 
 // User registration route
