@@ -83,15 +83,47 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-// Individual URL route - displays details for a specific URL
+/**
+ * Handles the GET request for displaying details of a specific URL.
+ * If the user is logged in and has the necessary permissions, it renders the details page.
+ * If the user is not logged in, it renders an error message prompting them to log in.
+ * If the requested URL does not exist or the user lacks permission, it renders an appropriate error message.
+ *
+ * @param {object} req - The Express request object.
+ * @param {object} res - The Express response object.
+ */
 app.get("/urls/:id", (req, res) => {
-  let user = users[req.session.user_id];
-  const templateVars = {
-    user: user,
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL
-  };
-  res.render("urls_show.ejs", templateVars);
+  let urlId = req.params.id;
+  // Check if the requested URL exists
+  if (!Object.hasOwn(urlDatabase, urlId)) {
+    const errorMessage = "The requested URL does not exist.";
+    res.render("error", { error: errorMessage });
+  } else {
+    if (req.session.user_id) {
+      // Check if the logged-in user has permission to access the URL
+      if (urlDatabase[urlId].userID !== req.session.user_id) {
+        const errorMessage = "You do not have permission to access the requested URL.";
+        res.render("error", { error: errorMessage });
+      }
+  
+      // Retrieve user details
+      let user = users[req.session.user_id];
+      
+      // Prepare template variables for rendering the details page
+      const templateVars = {
+        user: user,
+        id: req.params.id,
+        longURL: urlDatabase[req.params.id].longURL
+      };
+  
+      // Render the URL details page
+      res.render("urls_show.ejs", templateVars);
+    } else {
+      // User is not logged in
+      const errorMessage = "You need to log in to view your URLs.";
+      res.render("error", { error: errorMessage });
+    }
+  }
 });
 
 // Short URL redirection route
