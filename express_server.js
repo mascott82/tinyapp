@@ -210,6 +210,42 @@ app.post("/urls", (req, res) => {
   }
 });
 
+/**
+ * PUT endpoint for updating a URL route
+ * Checks if the user is logged in. If logged in, verifies if the user has permission
+ * to update the requested URL. If authorized, updates the long URL and redirects to the URLs page.
+ * If not authorized, renders an error page. If the user is not logged in, renders an error page
+ * prompting the user to log in.
+ *
+ * @param {object} req - Express request object with URL parameters and body
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
+app.put("/urls/:id", (req, res) => {
+  // Check if the user is logged in
+  let usrId = req.session.user_id;
+
+  if (usrId) {
+    // Check if the user has permission to update the requested URL
+    const curUrl = urlDatabase[req.params.id];
+    if (curUrl.userID === usrId) {
+      // Update the long URL in the database
+      urlDatabase[req.params.id].longURL = req.body.longURL;
+
+      // Redirect to the URLs page
+      res.redirect("/urls");
+    } else {
+      // User is not authorized, render an error page
+      const errorMessage = "You do not have permission to access the requested URL.";
+      res.render("error", { error: errorMessage });
+    }
+  } else {
+    // User is not logged in, render an error page
+    const errorMessage = "You need to log in to view your URLs.";
+    res.render("error", { error: errorMessage });
+  }
+});
+
 // Delete a URL route
 app.post("/urls/:id/delete", (req, res) => {
   let id = req.params.id;
@@ -265,13 +301,6 @@ app.post("/register", (req, res) => {
   req.session.user_id = newUserId;
   res.redirect("/urls");
 
-});
-
-// Update URL route
-app.put("/urls/:id", (req, res) => {
-  const urlId = req.params.id;
-  urlDatabase[urlId].longURL = req.body.longURL;
-  res.send(`Updating URL with ID ${urlId}`);
 });
 
 // Delete URL route
