@@ -8,7 +8,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
-const { getUserByEmailAndPwd } = require('./helpers');
+const { getUserByEmail, getUserByEmailAndPwd } = require('./helpers');
 
 // Import the objects from data.js
 const { urlDatabase, users } = require('./data');
@@ -332,41 +332,55 @@ app.post("/login", (req, res) => {
   }
 });
 
+/**
+ * POST endpoint for user registration - creates a new user
+ * Validates provided email and password, then checks if the email is already registered.
+ * If valid, creates a new user with a hashed password, sets the user session, and redirects to the URLs page.
+ * If invalid, renders an error page with a relevant error message.
+ *
+ * @param {object} req - Express request object with body containing user registration details
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
+app.post("/register", (req, res) => {
+  // Extract email and password from request body
+  let newUserEmail = req.body.email;
+  let newUserPwd = req.body.password;
+
+  // Validate that both email and password are provided
+  if (!newUserEmail || !newUserPwd) {
+    // User is not logged in, or email and password parameters are empty, or they don't match an existing user,
+    // render an error page with a relevant error message.
+    const errorMessage = "Invalid email or password. Please make sure both email and password are provided correctly.";
+    res.render("error", { error: errorMessage });
+  } else if (getUserByEmail(newUserEmail, users)) {
+    // The provided email already exists,
+    // render an error page with a relevant error message.
+    const errorMessage = "This email is already registered. Please use a different email address or log in with the existing account.";
+    res.render("error", { error: errorMessage });
+  } else {
+    // Generate a new user ID and hash the password
+    const newUserId = generateRandomString(6);
+    const hashedPwd = bcrypt.hashSync(newUserPwd, 10);
+
+    // Create a new user object
+    const newUser = {
+      id: newUserId,
+      email:  newUserEmail,
+      password: hashedPwd
+    };
+
+    // Add the new user to the users database, set user session, and redirect to the URLs page
+    users[newUserId] = newUser;
+    req.session.user_id = newUserId;
+    res.redirect("/urls");
+  }
+});
+
 // User logout route
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
-});
-
-// User registration route - creates a new user
-app.post("/register", (req, res) => {
-  let newUserId = generateRandomString(6);
-  let newUserEmail = req.body.email;
-  let newUserPwd = req.body.password;
-
-  if (!newUserEmail || !newUserPwd) {
-    return res.status(400).json({ error: 'Email and password are required.' });
-  }
-
-  const hashedPwd = bcrypt.hashSync(newUserPwd, 10);
-
-  console.log(`==${hashedPwd}==`);
-
-  Object.keys(users).forEach(key => {
-    if (users[key].email === newUserEmail) {
-      return res.status(400).json({ error: 'Email is already in use.' });
-    }
-  });
-
-  const newUser = {
-    id: newUserId,
-    email:  newUserEmail,
-    password: hashedPwd
-  };
-  users[newUserId] = newUser;
-  req.session.user_id = newUserId;
-  res.redirect("/urls");
-
 });
 
 // Delete URL route

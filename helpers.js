@@ -1,13 +1,11 @@
 const bcrypt = require('bcryptjs');
 
 const getUserByEmail = function(email, database) {
-  let user = {};
-  Object.keys(database).forEach(key => {
+  for (let key in database) {
     if (database[key].email === email) {
-      user = database[key];
+      return database[key];
     }
-  });
-  return user;
+  }
 };
 
 const getUserByEmailAndPwd = function(email, pwd, database) {
