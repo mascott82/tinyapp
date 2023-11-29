@@ -165,15 +165,6 @@ app.get("/register", (req, res) => {
   res.render("registration.ejs", templateVars);
 });
 
-// User login route
-app.get("/login", (req, res) => {
-  let user = users[req.session.user_id];
-  const templateVars = {
-    user: user
-  };
-  res.render("login.ejs", templateVars);
-});
-
 /**
  * POST endpoint for creating a new URL route
  * If the user is logged in, generates a unique short URL for the provided long URL
@@ -279,6 +270,28 @@ app.post("/urls/:id/delete", (req, res) => {
     // User is not logged in, render an error page
     const errorMessage = "You need to log in to view your URLs.";
     res.render("error", { error: errorMessage });
+  }
+});
+
+/**
+ * GET endpoint for user login
+ * Checks if the user is already logged in. If logged in, redirects to the URLs page.
+ * If not logged in, renders the login page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
+app.get("/login", (req, res) => {
+  // Check if the user is already logged in
+  let usrId = req.session.user_id;
+
+  if (usrId) {
+    // User is already logged in, redirect to the URLs page
+    res.redirect("/urls");
+  } else {
+    // User is not logged in, render the login page
+    res.render("login.ejs");
   }
 });
 
