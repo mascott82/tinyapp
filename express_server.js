@@ -8,7 +8,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
-const { getUserByEmail } = require('./helpers');
+const { getUserByEmailAndPwd } = require('./helpers');
 
 // Import the objects from data.js
 const { urlDatabase, users } = require('./data');
@@ -156,15 +156,6 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-// User registration route
-app.get("/register", (req, res) => {
-  let user = users[req.session.user_id];
-  const templateVars = {
-    user: user
-  };
-  res.render("registration.ejs", templateVars);
-});
-
 /**
  * POST endpoint for creating a new URL route
  * If the user is logged in, generates a unique short URL for the provided long URL
@@ -295,16 +286,49 @@ app.get("/login", (req, res) => {
   }
 });
 
-// User login route - validates user credentials
-app.post("/login", (req, res) => {
-  let curUser = getUserByEmail(req.body.email, users);
-  if (!curUser) {
-    return res.status(403).json({error: "Email is not found."});
-  } else if (bcrypt.compareSync(req.body.password, curUser.password)) {
-    req.session.user_id = curUser.id;
+/**
+ * GET endpoint for user registration
+ * Checks if the user is already logged in. If logged in, redirects to the URLs page.
+ * If not logged in, renders the user registration page.
+ *
+ * @param {object} req - Express request object
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
+app.get("/register", (req, res) => {
+  // Check if the user is already logged in
+  let usrId = req.session.user_id;
+  if (usrId) {
+    // User is already logged in, redirect to the URLs page
     res.redirect("/urls");
   } else {
-    return res.status(403).json({error: "Password is not match."});
+    // User is not logged in, render the user registration page
+    res.render("registration.ejs");
+  }
+});
+
+/**
+ * POST endpoint for user login with credential validation
+ * Validates user credentials by checking if the provided email and password
+ * match an existing user. If valid, sets the user session and redirects to the URLs page.
+ * If not valid, renders an error page with a relevant error message.
+ *
+ * @param {object} req - Express request object with body containing user credentials
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
+app.post("/login", (req, res) => {
+  // Attempt to retrieve user based on provided email and password
+  let curUser = getUserByEmailAndPwd(req.body.email, req.body.password, users);
+  if (!curUser) {
+    // User is not logged in or email and password params don't match an existing user,
+    // render an error page with a relevant error message.
+    const errorMessage = "Invalid email or password. Please check your credentials and try again.";
+    res.render("error", { error: errorMessage });
+  } else {
+    // Set the user session and redirect to the URLs page
+    req.session.user_id = curUser.id;
+    res.redirect("/urls");
   }
 });
 
