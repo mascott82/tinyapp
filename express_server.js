@@ -77,19 +77,20 @@ app.get("/hello", (req, res) => {
 
 // URL Index route - displays user-specific URLs
 app.get("/urls", (req, res) => {
-  let curUser;
-  Object.keys(users).forEach(key => {
-    if (users[key].id === req.session.user_id) curUser = users[key];
-  });
-  if (!curUser || curUser === 'undefined') {
-    res.status(403).json({error: "Login or Register first!"});
-  } else {
+  if (req.session.user_id) {
+    let curUser = users[req.session.user_id];
     let urls = urlsForUser(curUser.id);
     const templateVars = {
       user: curUser,
       urls: urls
     };
     res.render("urls_index", templateVars);
+  } else {
+    // User is not logged in
+    const errorMessage = "You need to log in to view your URLs.";
+
+    // Render the error template with the error message
+    res.render("error", { error: errorMessage });
   }
 });
 
