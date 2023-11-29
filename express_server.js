@@ -246,11 +246,40 @@ app.put("/urls/:id", (req, res) => {
   }
 });
 
-// Delete a URL route
+/**
+ * POST endpoint for deleting a URL route
+ * Checks if the user is logged in. If logged in, verifies if the user has permission
+ * to delete the requested URL. If authorized, deletes the URL from the database
+ * and redirects to the URLs page. If not authorized, renders an error page.
+ * If the user is not logged in, renders an error page prompting the user to log in.
+ *
+ * @param {object} req - Express request object with URL parameters
+ * @param {object} res - Express response object
+ * @returns {void}
+ */
 app.post("/urls/:id/delete", (req, res) => {
-  let id = req.params.id;
-  delete urlDatabase[id];
-  res.redirect("/urls");
+  // Check if the user is logged in
+  let usrId = req.session.user_id;
+
+  if (usrId) {
+    // Check if the user has permission to delete the requested URL
+    const curUrl = urlDatabase[req.params.id];
+    if (curUrl.userID === usrId) {
+      // Delete the URL from the database
+      delete urlDatabase[req.params.id];
+
+      // Redirect to the URLs page
+      res.redirect("/urls");
+    } else {
+      // User is not authorized, render an error page
+      const errorMessage = "You do not have permission to access the requested URL.";
+      res.render("error", { error: errorMessage });
+    }
+  } else {
+    // User is not logged in, render an error page
+    const errorMessage = "You need to log in to view your URLs.";
+    res.render("error", { error: errorMessage });
+  }
 });
 
 // User login route - validates user credentials
