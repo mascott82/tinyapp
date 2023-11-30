@@ -67,10 +67,10 @@ const generateRandomString = function(length) {
  * @returns {string|undefined} - Long URL if found, otherwise undefined.
  */
 const urlsForUser = function(id) {
-  let urls = [];
+  let urls = {};
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === id) {
-      urls.push(urlDatabase[key].longURL);
+      urls[key] = urlDatabase[key];
     }
   }
   return urls;
