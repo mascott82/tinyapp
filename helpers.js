@@ -78,6 +78,13 @@ const urlsForUser = function(id) {
   return urls;
 };
 
+/**
+ * Calculates total and unique visits for a given URL.
+ * @function
+ * @private
+ * @param {string} urlId - ID of the URL for which visits are calculated.
+ * @returns {number[]} - Array containing total and unique visit counts.
+ */
 const urlVisitsStatic = function(urlId) {
   let totalSum = 0;
   let uniqueSum = 0;
