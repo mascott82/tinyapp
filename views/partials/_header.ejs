@@ -12,25 +12,35 @@
     >
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+    <div class="collapse navbar-collapse container" id="navbarNavAltMarkup">
+      <div class="navbar-nav col-sm-8">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-    </div>
-    <div>
       <% if (typeof user !== 'undefined' && user) { %>
-        <span>Logged in as: <%= user.email %>!</span>
-        <form action="/logout" method="post">
-          <input type="submit" value="Logout" />
-        </form>
+        <div class="navbar-nav col-sm-7">
+          <div class="row align-items-end">
+            <div class="col">
+              <span>Logged in as: <%= user.email %>!</span>
+            </div>
+            <div class="col">
+              <form action="/logout" method="post">
+                <input type="submit" value="Logout" class="btn btn-primary"/>
+              </form>
+            </div>
+          </div>
+        </div>
       <% } else { %> 
-      <form action="/login" method="post">
-        <input name="username" placeholder="Username" id="username" />
-        <input type="submit" value="Login" />
-      </form>
-      <a href="/register">Register</a>
-      <a href="/login">Login</a>
+        <div class="navbar-nav col-sm-7">
+          <div class="row align-items-end">
+            <div class="col">
+              <a href="/register" class="btn btn-primary">Register</a>
+            </div>
+            <div class="col">
+              <a href="/login" class="btn btn-primary">Login</a>
+            </div>
+          </div>
+        </div>
       <% } %>
     </div>
   </nav>
