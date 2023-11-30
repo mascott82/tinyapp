@@ -2,11 +2,21 @@
 const urlDatabase = {
   "b6UTxQ": {
     longURL:  "https://www.tsn.ca",
-    userID: "aJ48lW"
+    userID: "aJ48lW",
+    visits: {
+      "aJ48lW": 1,
+      "bF56uV": 10
+    },
+    createdDate:  1701357569087
   },
   "i3BoGr": {
     longURL: "https://www.google.ca",
     userID: "aJ48lW",
+    visits: {
+      "aJ48lW": 20,
+      "bF56uV": 1
+    },
+    createdDate:  1701357697701
   }
 };
 
@@ -18,8 +28,8 @@ const users = {
     password: "$2a$10$euW2ylLuqr4cQJdqb96.5.Fw.2Md791bWl0FQXJR50YBx2g5Ezkuu"
   },
 
-  user2RandomID:  {
-    id: "user2RandomID",
+  bF56uV:  {
+    id: "bF56uV",
     email:  "user2@example.com",
     password: "dishwasher-funk",
   }

@@ -71,9 +71,22 @@ const urlsForUser = function(id) {
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === id) {
       urls[key] = urlDatabase[key];
+      urls[key]["totalSum"] = urlVisitsStatic(key)[0];
+      urls[key]["uniqueSum"] = urlVisitsStatic(key)[1];
     }
   }
   return urls;
+};
+
+const urlVisitsStatic = function(urlId) {
+  let totalSum = 0;
+  let uniqueSum = 0;
+  let visitsByUrlId = urlDatabase[urlId].visits;
+  for (let key in visitsByUrlId) {
+    uniqueSum += 1;
+    totalSum += visitsByUrlId[key];
+  }
+  return [totalSum, uniqueSum];
 };
 
 module.exports = { getUserByEmail, getUserByEmailAndPwd, generateRandomString, urlsForUser };
