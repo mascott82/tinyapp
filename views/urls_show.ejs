@@ -15,9 +15,18 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= url.longURL %></h5>
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+        </p>
+        <p class="card-text">
+          Created Date: <%= url.createdDate %>
+        </p>
+        <p class="card-text">
+          Total visits: <%= url.totalSum %>
+        </p>
+        <p class="card-text">
+          Unique visits: <%= url.uniqueSum %>
         </p>
       </div>
       <div class="card-footer text-muted">
@@ -26,7 +35,7 @@
           <div class="row mb-3">
             <label for="longURL" class="col-sm-4 col-form-label">New URL:</label>
             <div class="col-sm-4">
-              <input type="text" class="form-control" id="longURL" name="longURL" placeholder="<%= longURL %>"/>
+              <input type="text" class="form-control" id="longURL" name="longURL" placeholder="<%= url.longURL %>"/>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>

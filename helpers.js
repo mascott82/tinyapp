@@ -89,4 +89,4 @@ const urlVisitsStatic = function(urlId) {
   return [totalSum, uniqueSum];
 };
 
-module.exports = { getUserByEmail, getUserByEmailAndPwd, generateRandomString, urlsForUser };
+module.exports = { getUserByEmail, getUserByEmailAndPwd, generateRandomString, urlsForUser, urlVisitsStatic };

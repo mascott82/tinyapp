@@ -8,7 +8,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
-const { generateRandomString, urlsForUser, getUserByEmail, getUserByEmailAndPwd } = require('./helpers');
+const { generateRandomString, urlsForUser, getUserByEmail, getUserByEmailAndPwd, urlVisitsStatic } = require('./helpers');
 
 // Import the objects from data.js
 const { urlDatabase, users } = require('./data');
@@ -136,12 +136,18 @@ app.get("/urls/:id", (req, res) => {
   
       // Retrieve user details
       let user = users[req.session.user_id];
+
+      // Retrieve url details
+      let url = urlDatabase[req.params.id];
+      let urlVisit = urlVisitsStatic(req.params.id);
+      url["totalSum"] = urlVisit[0];
+      url["uniqueSum"] = urlVisit[1];
       
       // Prepare template variables for rendering the details page
       const templateVars = {
         user: user,
         id: req.params.id,
-        longURL: urlDatabase[req.params.id].longURL
+        url: url
       };
   
       // Render the URL details page
