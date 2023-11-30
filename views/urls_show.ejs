@@ -22,16 +22,12 @@
       </div>
       <div class="card-footer text-muted">
         <h5 class="card-title">Edit</h5>
-        <form class="form-inline" action="/urls/<%= id %>?_method=PUT" method="POST">
-          <div class="form-group mb-2">
-            <label for="longURL">New URL:</label>
-            <input
-              class="form-control"
-              type="text"
-              name="longURL"
-              placeholder="<%= longURL %>"
-              style="width: 300px; margin: 1em"
-            />
+        <form action="/urls/<%= id %>?_method=PUT" method="POST">
+          <div class="row mb-3">
+            <label for="longURL" class="col-sm-4 col-form-label">New URL:</label>
+            <div class="col-sm-4">
+              <input type="text" class="form-control" id="longURL" name="longURL" placeholder="<%= longURL %>"/>
+            </div>
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </form>
