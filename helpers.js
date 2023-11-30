@@ -67,11 +67,13 @@ const generateRandomString = function(length) {
  * @returns {string|undefined} - Long URL if found, otherwise undefined.
  */
 const urlsForUser = function(id) {
+  let urls = [];
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === id) {
-      return  urlDatabase[key].longURL;
+      urls.push(urlDatabase[key].longURL);
     }
   }
+  return urls;
 };
 
 module.exports = { getUserByEmail, getUserByEmailAndPwd, generateRandomString, urlsForUser };
